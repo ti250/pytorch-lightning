@@ -402,6 +402,7 @@ class TrainerTrainLoopMixin(ABC):
         if self.use_tpu:
             device = xm.xla_device()
             loader = train_dataloader
+            log.info(type(loader))
             if isinstance(loader, xla_pl.ParallelLoader):
                 log.info("ParalleLoader wrapping other ParallelLoader avoided.")
                 loader = loader._loader
@@ -429,6 +430,7 @@ class TrainerTrainLoopMixin(ABC):
             # RUN TRAIN STEP
             # ---------------
             _outputs = self.run_training_batch(batch, batch_idx)
+            log.info("RAN TRAINING BATCH{}".format(batch_idx))
             batch_result, grad_norm_dic, batch_step_metrics, batch_output = _outputs
 
             # only track outputs when user implementes training_epoch_end
