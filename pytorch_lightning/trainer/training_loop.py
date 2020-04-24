@@ -402,7 +402,7 @@ class TrainerTrainLoopMixin(ABC):
         if self.use_tpu:
             device = xm.xla_device()
             loader = train_dataloader
-            if isinstance(loader, ParalleLoader):
+            if isinstance(loader, xla_pl.ParallelLoader):
                 print("ParalleLoader wrapping other ParallelLoader avoided.")
                 loader = loader._loader
             train_dataloader = xla_pl.ParallelLoader(loader, [device])
