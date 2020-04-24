@@ -385,7 +385,7 @@ class TrainerTrainLoopMixin(ABC):
 
         # get model
         model = self.get_model()
-
+        log.info("GOT MODEL")
         # Epoch start events
         with self.profiler.profile('on_epoch_start'):
             # callbacks
@@ -403,10 +403,12 @@ class TrainerTrainLoopMixin(ABC):
             device = xm.xla_device()
             loader = train_dataloader
             if isinstance(loader, xla_pl.ParallelLoader):
-                print("ParalleLoader wrapping other ParallelLoader avoided.")
+                log.info("ParalleLoader wrapping other ParallelLoader avoided.")
                 loader = loader._loader
             train_dataloader = xla_pl.ParallelLoader(loader, [device])
             train_dataloader = train_dataloader.per_device_loader(device)
+
+        log.info("TRAIN DATALOADER DONE")
 
         # bookkeeping
         outputs = []
@@ -488,7 +490,7 @@ class TrainerTrainLoopMixin(ABC):
             # requested in the batches
             if early_stop_epoch or self.fast_dev_run:
                 break
-
+        log.info("FINISHED EPOCH TRAINING")
         if self.use_horovod:
             hvd.join(hvd.local_rank() if self.on_gpu else -1)
 
@@ -502,10 +504,14 @@ class TrainerTrainLoopMixin(ABC):
             self.log_metrics(log_epoch_metrics, {})
             self.callback_metrics.update(callback_epoch_metrics)
 
+        log.info("PROCESSED EPOCH OUTPUTS")
+
         # when no val loop is present or fast-dev-run still need to call checkpoints
         if not self.is_overriden('validation_step') and not (self.fast_dev_run or should_check_val):
             self.call_checkpoint_callback()
             self.call_early_stop_callback()
+
+        log.info("CALLED CHECKPOINTS")
 
         # Epoch end events
         with self.profiler.profile('on_epoch_end'):
@@ -514,6 +520,8 @@ class TrainerTrainLoopMixin(ABC):
             # model hooks
             if self.is_function_implemented('on_epoch_end'):
                 model.on_epoch_end()
+
+        log.info("CALLED ON EPOCH END")
 
     def run_training_batch(self, batch, batch_idx):
         # track grad norms
